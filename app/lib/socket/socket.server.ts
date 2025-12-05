@@ -8,7 +8,7 @@ import { Server as SocketIOServer, Socket } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { getRedisCluster } from '../redis/cluster.server';
 import { getSessionManager } from '../session.server';
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 
 /**
  * Socket.IO 서버 설정
@@ -715,4 +715,12 @@ export async function initializeSocketIO(httpServer: HTTPServer): Promise<Socket
   const manager = getSocketManager();
   await manager.initialize(httpServer);
   return manager;
+}
+
+/**
+ * Socket.IO 인스턴스 가져오기 (레거시 호환성)
+ */
+export function getSocketIOInstance(): SocketIOServer | null {
+  const manager = getSocketManager();
+  return (manager as any).io || null;
 }

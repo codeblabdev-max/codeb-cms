@@ -8,7 +8,19 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const userId = await getUserId(request);
   if (userId) return redirect('/');
   
-  return json({});
+  // 개발 환경에서만 테스트 계정 정보 제공
+  const testCredentials = process.env.NODE_ENV === 'development' ? {
+    admin: {
+      email: 'admin@test.com',
+      password: 'admin123'
+    },
+    user: {
+      email: 'user@test.com',
+      password: 'user123'
+    }
+  } : null;
+  
+  return json({ testCredentials });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -45,11 +57,11 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function LoginPage() {
-  const data = useLoaderData<typeof loader>();
+  const { testCredentials } = useLoaderData<typeof loader>();
   
   return (
-    <div className="container py-8">
-      <LoginForm />
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ maxWidth: '1450px' }}>
+      <LoginForm testCredentials={testCredentials} />
     </div>
   );
 }

@@ -2,7 +2,7 @@
  * 데이터베이스 성능 최적화 시스템
  * 쿼리 최적화, 인덱스 관리, 연결 풀 최적화
  */
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 import { performance } from 'perf_hooks';
 import { getMetricsCollector } from '../monitoring/metrics-collector.server';
 import { getRedisCluster } from '../redis/cluster.server';

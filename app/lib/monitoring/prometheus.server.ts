@@ -444,3 +444,6 @@ export function prometheusMiddleware(req: any, res: any, next: any) {
   
   next();
 }
+
+// Export the registry for compatibility
+export { register as prometheusRegistry };

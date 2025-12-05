@@ -107,7 +107,7 @@ export const action: ActionFunction = async ({ request }) => {
       case 'admin-broadcast': {
         // 관리자만 전체 브로드캐스트 가능
         const dbUser = await import('../lib/auth.server').then(m => 
-          import('~/utils/db.server').then(db => 
+          import('~/lib/db.server').then(db => 
             db.db.user.findUnique({
               where: { id: user.id },
               select: { role: true },

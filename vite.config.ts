@@ -1,6 +1,6 @@
 import { vitePlugin as remix } from "@remix-run/dev";
 import { defineConfig } from "vite";
-import tsconfigPaths from "vite-tsconfig-paths";
+import path from "path";
 
 declare module "@remix-run/node" {
   interface Future {
@@ -19,14 +19,19 @@ export default defineConfig({
         v3_lazyRouteDiscovery: true,
       },
     }),
-    tsconfigPaths(),
+    socketIOPlugin(),
   ],
-  
+  resolve: {
+    alias: {
+      "~": path.resolve(__dirname, "./app"),
+    },
+  },
+
   // 성능 최적화 설정
   build: {
     // 청크 사이즈 경고 한계 증가 (기본 500kb -> 1000kb)
     chunkSizeWarningLimit: 1000,
-    
+
     rollupOptions: {
       // 서버 사이드 빌드에서 외부 의존성으로 처리
       external: ['sharp'],
@@ -35,7 +40,7 @@ export default defineConfig({
         manualChunks: {
           // React 관련 라이브러리
           'react-vendor': ['react', 'react-dom'],
-          
+
           // UI 컴포넌트 라이브러리
           'ui-vendor': [
             '@radix-ui/react-avatar',
@@ -51,7 +56,7 @@ export default defineConfig({
             '@radix-ui/react-switch',
             '@radix-ui/react-tabs'
           ],
-          
+
           // 유틸리티 라이브러리
           'utils-vendor': [
             'class-variance-authority',
@@ -60,31 +65,31 @@ export default defineConfig({
             'date-fns',
             'lucide-react'
           ],
-          
+
           // 폼 관련 라이브러리
           'form-vendor': [
             'react-hook-form',
             '@hookform/resolvers',
             'zod'
           ],
-          
+
           // 드래그 앤 드롭 라이브러리
           'dnd-vendor': [
             '@dnd-kit/core',
             '@dnd-kit/sortable',
             '@dnd-kit/utilities'
           ],
-          
+
           // 상태 관리
           'state-vendor': ['zustand']
         }
       }
     },
-    
+
     // 소스맵 설정 (프로덕션에서는 비활성화로 크기 줄이기)
     sourcemap: process.env.NODE_ENV === 'development',
   },
-  
+
   // 개발 서버 최적화
   server: {
     // HMR 성능 개선
@@ -96,7 +101,7 @@ export default defineConfig({
       allow: ['..']
     }
   },
-  
+
   // 종속성 최적화
   optimizeDeps: {
     include: [
@@ -119,9 +124,53 @@ export default defineConfig({
   ssr: {
     noExternal: ['lru-cache']
   },
-  
+
   // CSS 최적화
   css: {
     devSourcemap: true
   }
 });
+
+function socketIOPlugin() {
+  return {
+    name: "socket-io-plugin",
+    configureServer(server) {
+      console.log("🔌 Socket.IO Plugin: configureServer called");
+      if (!server.httpServer) {
+        console.log("🔌 Socket.IO Plugin: server.httpServer is missing");
+        return;
+      }
+
+      console.log("🔌 Socket.IO Plugin: server.httpServer exists");
+
+      const initSocket = () => {
+        console.log("🔌 Socket.IO Plugin: Initializing Socket.IO...");
+        server.ssrLoadModule("./app/lib/socket/socket.server.ts")
+          .then((module) => {
+            console.log("🔌 Socket.IO Plugin: Module loaded", Object.keys(module));
+            if (module.initializeSocketIO) {
+              module.initializeSocketIO(server.httpServer);
+              console.log("🔌 Socket.IO Plugin: initializeSocketIO called");
+            } else {
+              console.error("🔌 Socket.IO Plugin: initializeSocketIO not found in module");
+            }
+          })
+          .catch((err) => {
+            console.error("🔌 Socket.IO Plugin: Failed to load module:", err);
+          });
+      };
+
+      if (server.httpServer.listening) {
+        console.log("🔌 Socket.IO Plugin: Server already listening");
+        initSocket();
+      } else {
+        server.httpServer.on('listening', () => {
+          console.log("🔌 Socket.IO Plugin: Server listening event fired");
+          initSocket();
+        });
+      }
+    },
+  };
+}
+
+

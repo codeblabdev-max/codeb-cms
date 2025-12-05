@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { Eye, Edit, Trash2 } from "lucide-react";
-import { db } from "~/utils/db.server";
+import { db } from "~/lib/db.server";
 import { requireUser } from "~/lib/auth.server";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -48,7 +48,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
         select: { name: true, email: true },
       },
       menu: {
-        select: { name: true },
+        select: { id: true, name: true, slug: true },
       },
       _count: {
         select: { comments: true },
@@ -57,7 +57,14 @@ export async function loader({ request }: LoaderFunctionArgs) {
     orderBy: { createdAt: 'desc' },
   });
 
-  return json({ posts });
+  // 메뉴(게시판) 목록도 함께 로드
+  const menus = await db.menu.findMany({
+    where: { isActive: true },
+    select: { id: true, name: true, slug: true },
+    orderBy: { order: 'asc' },
+  });
+
+  return json({ posts, menus });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -108,9 +115,10 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function AdminPosts() {
-  const { posts } = useLoaderData<typeof loader>();
+  const { posts, menus } = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
   const [selectedPosts, setSelectedPosts] = useState<string[]>([]);
+  const [selectedMenu, setSelectedMenu] = useState<string>("");
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -146,9 +154,25 @@ export default function AdminPosts() {
           <h2 className="text-3xl font-bold tracking-tight">게시글 관리</h2>
           <p className="text-muted-foreground">모든 게시글을 관리합니다.</p>
         </div>
-        <Button asChild>
-          <Link to="/posts/new">새 게시글 작성</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Select value={selectedMenu} onValueChange={setSelectedMenu}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="게시판 선택" />
+            </SelectTrigger>
+            <SelectContent>
+              {menus.map((menu) => (
+                <SelectItem key={menu.id} value={menu.slug}>
+                  {menu.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button asChild disabled={!selectedMenu}>
+            <Link to={selectedMenu ? `/${selectedMenu}/write` : "#"}>
+              새 게시글 작성
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -221,7 +245,7 @@ export default function AdminPosts() {
                     </TableCell>
                     <TableCell>
                       <Link
-                        to={`/posts/${post.slug}`}
+                        to={post.menu ? `/${post.menu.slug}/${post.slug}` : "#"}
                         className="font-medium hover:underline"
                       >
                         {post.title}
@@ -253,12 +277,12 @@ export default function AdminPosts() {
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Button size="icon" variant="ghost" asChild>
-                          <Link to={`/posts/${post.slug}`}>
+                          <Link to={post.menu ? `/${post.menu.slug}/${post.slug}` : "#"}>
                             <Eye className="h-4 w-4" />
                           </Link>
                         </Button>
                         <Button size="icon" variant="ghost" asChild>
-                          <Link to={`/posts/${post.slug}/edit`}>
+                          <Link to={post.menu ? `/${post.menu.slug}/${post.slug}/edit` : "#"}>
                             <Edit className="h-4 w-4" />
                           </Link>
                         </Button>

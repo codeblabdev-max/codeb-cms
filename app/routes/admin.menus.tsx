@@ -7,10 +7,17 @@ import { Label } from "~/components/ui/label";
 import { Badge } from "~/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Plus, Edit2, Trash2, GripVertical } from "lucide-react";
-import { db } from "~/utils/db.server";
+import { db } from "~/lib/db.server";
 import { requireUser } from "~/lib/auth.server";
 import { useState } from "react";
 import { z } from "zod";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 const menuItemSchema = z.object({
   title: z.string().min(1, "제목은 필수입니다"),
@@ -37,7 +44,17 @@ export async function loader({ request }: LoaderFunctionArgs) {
     orderBy: { name: 'asc' },
   });
 
-  return json({ menus });
+  const boards = await db.board.findMany({
+    where: { isActive: true },
+    orderBy: { order: 'asc' },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+    },
+  });
+
+  return json({ menus, boards });
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -60,14 +77,27 @@ export async function action({ request }: ActionFunctionArgs) {
     } else if (intent === 'createMenuItem') {
       const menuId = formData.get('menuId') as string;
       const title = formData.get('title') as string;
-      const url = formData.get('url') as string;
+      const urlType = formData.get('urlType') as string;
       const parentId = formData.get('parentId') as string | null;
-      
+
+      let url: string;
+
+      if (urlType === 'board') {
+        const boardId = formData.get('boardId') as string;
+        const board = await db.board.findUnique({
+          where: { id: boardId },
+          select: { slug: true },
+        });
+        url = board ? `/${board.slug}` : '/';
+      } else {
+        url = formData.get('url') as string;
+      }
+
       const lastItem = await db.menuItem.findFirst({
         where: { menuId, parentId },
         orderBy: { order: 'desc' },
       });
-      
+
       await db.menuItem.create({
         data: {
           menuId,
@@ -109,9 +139,10 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function AdminMenus() {
-  const { menus } = useLoaderData<typeof loader>();
+  const { menus, boards } = useLoaderData<typeof loader>();
   const fetcher = useFetcher();
   const [editingItem, setEditingItem] = useState<string | null>(null);
+  const [urlTypeByMenu, setUrlTypeByMenu] = useState<Record<string, 'board' | 'custom'>>({});
 
   return (
     <div className="space-y-6">
@@ -190,28 +221,72 @@ export default function AdminMenus() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <fetcher.Form method="post" className="flex gap-4 border-b pb-4">
+                  <fetcher.Form method="post" className="space-y-4 border-b pb-4">
                     <input type="hidden" name="intent" value="createMenuItem" />
                     <input type="hidden" name="menuId" value={menu.id} />
-                    <div className="flex-1">
-                      <Label htmlFor={`title-${menu.id}`}>제목</Label>
-                      <Input
-                        id={`title-${menu.id}`}
-                        name="title"
-                        placeholder="메뉴 항목"
-                        required
-                      />
+                    <input type="hidden" name="urlType" value={urlTypeByMenu[menu.id] || 'custom'} />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor={`title-${menu.id}`}>제목</Label>
+                        <Input
+                          id={`title-${menu.id}`}
+                          name="title"
+                          placeholder="메뉴 항목"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor={`urlType-${menu.id}`}>URL 타입</Label>
+                        <Select
+                          value={urlTypeByMenu[menu.id] || 'custom'}
+                          onValueChange={(value) => {
+                            setUrlTypeByMenu({
+                              ...urlTypeByMenu,
+                              [menu.id]: value as 'board' | 'custom'
+                            });
+                          }}
+                        >
+                          <SelectTrigger id={`urlType-${menu.id}`}>
+                            <SelectValue placeholder="URL 타입 선택" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="board">게시판</SelectItem>
+                            <SelectItem value="custom">직접입력</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <Label htmlFor={`url-${menu.id}`}>URL</Label>
-                      <Input
-                        id={`url-${menu.id}`}
-                        name="url"
-                        placeholder="/about"
-                        required
-                      />
-                    </div>
-                    <div className="flex items-end">
+
+                    {urlTypeByMenu[menu.id] === 'board' ? (
+                      <div>
+                        <Label htmlFor={`boardId-${menu.id}`}>게시판 선택</Label>
+                        <Select name="boardId" required>
+                          <SelectTrigger id={`boardId-${menu.id}`}>
+                            <SelectValue placeholder="게시판을 선택하세요" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {boards.map((board) => (
+                              <SelectItem key={board.id} value={board.id}>
+                                {board.name} (/{board.slug})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <div>
+                        <Label htmlFor={`url-${menu.id}`}>URL</Label>
+                        <Input
+                          id={`url-${menu.id}`}
+                          name="url"
+                          placeholder="/about"
+                          required={urlTypeByMenu[menu.id] !== 'board'}
+                        />
+                      </div>
+                    )}
+
+                    <div className="flex justify-end">
                       <Button type="submit">
                         <Plus className="h-4 w-4 mr-1" />
                         추가

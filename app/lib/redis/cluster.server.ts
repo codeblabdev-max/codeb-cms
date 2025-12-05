@@ -3,7 +3,7 @@
  * 10,000+ 동시 사용자 지원을 위한 고가용성 Redis 클러스터 구성
  */
 
-import { Cluster, RedisOptions } from 'ioredis';
+import { Cluster, Redis, RedisOptions } from 'ioredis';
 
 // 환경 변수에서 Redis 클러스터 노드 정보 가져오기
 const getClusterNodes = () => {
@@ -108,57 +108,106 @@ const clusterOptions = {
   natMap: process.env.REDIS_NAT_MAP ? JSON.parse(process.env.REDIS_NAT_MAP) : undefined,
 };
 
-// Redis 클러스터 인스턴스 생성
-let redisCluster: Cluster | null = null;
+// Redis 인스턴스 (클러스터 모드 여부에 따라 Cluster 또는 Redis)
+let redisCluster: Cluster | Redis | null = null;
+
+// 클러스터 모드 사용 여부 (환경 변수로 제어)
+const USE_CLUSTER_MODE = process.env.USE_REDIS_CLUSTER === 'true';
 
 /**
  * Redis 클러스터 인스턴스 가져오기
  */
-export function getRedisCluster(): Cluster {
+export function getRedisCluster(): Cluster | Redis {
   if (!redisCluster) {
-    const nodes = getClusterNodes();
-    
-    console.log('Initializing Redis Cluster with nodes:', nodes);
-    
-    redisCluster = new Cluster(nodes, clusterOptions);
-    
-    // 이벤트 리스너 설정
-    redisCluster.on('connect', () => {
-      console.log('Redis Cluster connected');
-    });
-    
-    redisCluster.on('ready', () => {
-      console.log('Redis Cluster ready');
-    });
-    
-    redisCluster.on('error', (error) => {
-      console.error('Redis Cluster error:', error);
-    });
-    
-    redisCluster.on('close', () => {
-      console.log('Redis Cluster connection closed');
-    });
-    
-    redisCluster.on('reconnecting', (delay: number) => {
-      console.log(`Redis Cluster reconnecting in ${delay}ms`);
-    });
-    
-    redisCluster.on('node error', (error: Error, address: string) => {
-      console.error(`Redis node error at ${address}:`, error);
-    });
-    
+    if (USE_CLUSTER_MODE) {
+      // Redis Cluster 모드
+      const nodes = getClusterNodes();
+
+      console.log('Initializing Redis Cluster with nodes:', nodes);
+
+      redisCluster = new Cluster(nodes, clusterOptions);
+
+      // 이벤트 리스너 설정
+      redisCluster.on('connect', () => {
+        console.log('Redis Cluster connected');
+      });
+
+      redisCluster.on('ready', () => {
+        console.log('Redis Cluster ready');
+      });
+
+      redisCluster.on('error', (error) => {
+        console.error('Redis Cluster error:', error);
+      });
+
+      redisCluster.on('close', () => {
+        console.log('Redis Cluster connection closed');
+      });
+
+      redisCluster.on('reconnecting', (delay: number) => {
+        console.log(`Redis Cluster reconnecting in ${delay}ms`);
+      });
+
+      redisCluster.on('node error', (error: Error, address: string) => {
+        console.error(`Redis node error at ${address}:`, error);
+      });
+    } else {
+      // 단일 Redis 인스턴스 모드
+      const host = process.env.REDIS_HOST_1 || process.env.REDIS_HOST || 'localhost';
+      const port = parseInt(process.env.REDIS_PORT_1 || process.env.REDIS_PORT || '6379');
+
+      console.log(`Initializing standalone Redis at ${host}:${port}`);
+
+      redisCluster = new Redis({
+        host,
+        port,
+        password: process.env.REDIS_PASSWORD,
+        retryStrategy: (times: number) => {
+          if (times > 10) {
+            console.error('Redis connection failed after 10 attempts');
+            return null;
+          }
+          return Math.min(times * 50, 2000);
+        },
+        lazyConnect: false,
+        keepAlive: 10000,
+        connectTimeout: 10000,
+      });
+
+      // 이벤트 리스너 설정
+      redisCluster.on('connect', () => {
+        console.log('Redis connected');
+      });
+
+      redisCluster.on('ready', () => {
+        console.log('Redis ready');
+      });
+
+      redisCluster.on('error', (error) => {
+        console.error('Redis error:', error);
+      });
+
+      redisCluster.on('close', () => {
+        console.log('Redis connection closed');
+      });
+
+      redisCluster.on('reconnecting', (delay: number) => {
+        console.log(`Redis reconnecting in ${delay}ms`);
+      });
+    }
+
     // 프로세스 종료 시 연결 정리
     process.on('SIGINT', async () => {
       await closeRedisCluster();
       process.exit(0);
     });
-    
+
     process.on('SIGTERM', async () => {
       await closeRedisCluster();
       process.exit(0);
     });
   }
-  
+
   return redisCluster;
 }
 

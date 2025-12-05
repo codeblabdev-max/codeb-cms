@@ -1,4 +1,4 @@
-import { Form, Link, useActionData, useSearchParams, useLoaderData } from '@remix-run/react';
+import { Form, Link, useActionData, useSearchParams } from '@remix-run/react';
 import { Button } from '~/components/ui/button';
 import { Input } from '~/components/ui/input';
 import { useRef } from 'react';
@@ -21,11 +21,11 @@ export function LoginForm({ error, testCredentials }: LoginFormProps) {
     // 폼 값 설정
     const emailInput = document.getElementById('emailOrUsername') as HTMLInputElement;
     const passwordInput = document.getElementById('password') as HTMLInputElement;
-    
+
     if (emailInput && passwordInput) {
       emailInput.value = email;
       passwordInput.value = password;
-      
+
       // 폼 제출
       if (formRef.current) {
         formRef.current.requestSubmit();
@@ -36,7 +36,7 @@ export function LoginForm({ error, testCredentials }: LoginFormProps) {
   return (
     <div className="mx-auto max-w-md space-y-6">
       <div className="text-center">
-        <h1 className="text-3xl font-bold">로그인</h1>
+        <h1 className="text-3xl font-bold text-foreground">로그인</h1>
         <p className="mt-2 text-sm text-muted-foreground">
           계정이 없으신가요?{' '}
           <Link
@@ -53,9 +53,9 @@ export function LoginForm({ error, testCredentials }: LoginFormProps) {
 
       <Form ref={formRef} method="post" className="space-y-4">
         <input type="hidden" name="redirectTo" value={redirectTo} />
-        
+
         <div className="space-y-2">
-          <label htmlFor="emailOrUsername" className="text-sm font-medium">
+          <label htmlFor="emailOrUsername" className="text-sm font-medium text-foreground">
             이메일 또는 사용자명
           </label>
           <Input
@@ -69,7 +69,7 @@ export function LoginForm({ error, testCredentials }: LoginFormProps) {
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium">
+          <label htmlFor="password" className="text-sm font-medium text-foreground">
             비밀번호
           </label>
           <Input
@@ -88,9 +88,9 @@ export function LoginForm({ error, testCredentials }: LoginFormProps) {
               id="remember"
               name="remember"
               type="checkbox"
-              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
             />
-            <label htmlFor="remember" className="text-sm">
+            <label htmlFor="remember" className="text-sm text-foreground">
               로그인 상태 유지
             </label>
           </div>

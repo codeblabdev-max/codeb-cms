@@ -8,7 +8,7 @@ import { Textarea } from "~/components/ui/textarea";
 import { Switch } from "~/components/ui/switch";
 import { Separator } from "~/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
-import { db } from "~/utils/db.server";
+import { db } from "~/lib/db.server";
 import { requireUser } from "~/lib/auth.server";
 import { z } from "zod";
 

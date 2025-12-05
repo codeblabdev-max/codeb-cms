@@ -5,7 +5,7 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
 import { Search } from "lucide-react";
-import { db } from "~/utils/db.server";
+import { db } from "~/lib/db.server";
 import { requireUser } from "~/lib/auth.server";
 import { z } from "zod";
 

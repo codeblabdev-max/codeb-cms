@@ -3,19 +3,18 @@
  * 실시간 채팅 UI
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
 import { ko } from 'date-fns/locale';
-import { 
-  Send, 
-  Paperclip, 
-  Smile, 
+import {
+  Send,
+  Paperclip,
+  Smile,
   MoreVertical,
   Edit2,
   Trash2,
   Reply,
   Copy,
-  Check,
   CheckCheck,
 } from 'lucide-react';
 import { Button } from '~/components/ui/button';
@@ -86,7 +85,7 @@ export function ChatRoom({ roomId, currentUserId, className }: ChatRoomProps) {
       if (message.roomId === roomId) {
         setMessages(prev => [...prev, message]);
         scrollToBottom();
-        
+
         // 다른 사용자의 메시지인 경우 읽음 처리
         if (message.userId !== currentUserId) {
           socket.emit('message:read', { roomId, messageId: message.id });
@@ -95,13 +94,13 @@ export function ChatRoom({ roomId, currentUserId, className }: ChatRoomProps) {
     };
 
     const handleMessageEdited = (message: ChatMessage) => {
-      setMessages(prev => prev.map(msg => 
+      setMessages(prev => prev.map(msg =>
         msg.id === message.id ? message : msg
       ));
     };
 
     const handleMessageDeleted = ({ messageId }: { messageId: string }) => {
-      setMessages(prev => prev.map(msg => 
+      setMessages(prev => prev.map(msg =>
         msg.id === messageId ? { ...msg, deletedAt: new Date() } : msg
       ));
     };
@@ -189,15 +188,15 @@ export function ChatRoom({ roomId, currentUserId, className }: ChatRoomProps) {
   // 타이핑 시작
   const handleTypingStart = () => {
     if (!socket || isTyping) return;
-    
+
     setIsTyping(true);
     socket.emit('typing:start', { roomId, isTyping: true });
-    
+
     // 타이핑 종료 타이머
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    
+
     typingTimeoutRef.current = setTimeout(() => {
       handleTypingStop();
     }, 3000);
@@ -206,10 +205,10 @@ export function ChatRoom({ roomId, currentUserId, className }: ChatRoomProps) {
   // 타이핑 종료
   const handleTypingStop = () => {
     if (!socket || !isTyping) return;
-    
+
     setIsTyping(false);
     socket.emit('typing:stop', { roomId, isTyping: false });
-    
+
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
@@ -218,7 +217,7 @@ export function ChatRoom({ roomId, currentUserId, className }: ChatRoomProps) {
   // 메시지 수정
   const handleEditMessage = (messageId: string, content: string) => {
     if (!socket) return;
-    
+
     socket.emit('message:edit', { messageId, content });
     setEditingMessage(null);
   };
@@ -226,18 +225,18 @@ export function ChatRoom({ roomId, currentUserId, className }: ChatRoomProps) {
   // 메시지 삭제
   const handleDeleteMessage = (messageId: string) => {
     if (!socket) return;
-    
+
     socket.emit('message:delete', { messageId });
   };
 
   // 반응 추가/제거
   const handleReaction = (messageId: string, emoji: string) => {
     if (!socket) return;
-    
+
     const message = messages.find(msg => msg.id === messageId);
     const reactions = message?.reactions || {};
     const hasReacted = reactions[emoji]?.includes(currentUserId);
-    
+
     if (hasReacted) {
       socket.emit('reaction:remove', { messageId, emoji });
     } else {
@@ -262,7 +261,7 @@ export function ChatRoom({ roomId, currentUserId, className }: ChatRoomProps) {
       });
 
       const data = await response.json();
-      
+
       if (data.url) {
         socket.emit('message:send', {
           roomId,
@@ -289,7 +288,7 @@ export function ChatRoom({ roomId, currentUserId, className }: ChatRoomProps) {
   // 날짜 포맷
   const formatDate = (date: Date) => {
     const messageDate = new Date(date);
-    
+
     if (isToday(messageDate)) {
       return '오늘';
     } else if (isYesterday(messageDate)) {
@@ -333,7 +332,7 @@ export function ChatRoom({ roomId, currentUserId, className }: ChatRoomProps) {
             {messages.map((message, index) => {
               const isOwn = message.userId === currentUserId;
               const showAvatar = !isOwn && (
-                index === 0 || 
+                index === 0 ||
                 messages[index - 1]?.userId !== message.userId ||
                 new Date(message.createdAt).getTime() - new Date(messages[index - 1].createdAt).getTime() > 60000
               );

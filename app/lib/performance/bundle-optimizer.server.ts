@@ -35,7 +35,7 @@ export class BundleOptimizer {
       }
 
       // 동적 임포트
-      const module = await import(modulePath) as T;
+      const module = await import(/* @vite-ignore */ modulePath) as T;
       
       // 로딩 완료 기록
       this.loadedModules.add(modulePath);
@@ -76,7 +76,7 @@ export class BundleOptimizer {
     const preloadPromises = dependencies.map(async (dep) => {
       if (!this.loadedModules.has(dep)) {
         try {
-          await import(dep);
+          await import(/* @vite-ignore */ dep);
           this.loadedModules.add(dep);
         } catch (error) {
           console.warn(`⚠️  의존성 preload 실패: ${dep}`, error);

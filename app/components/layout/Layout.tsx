@@ -20,9 +20,10 @@ interface LayoutProps {
     order: number;
   }[];
   settings?: Record<string, string>;
+  themeMode?: "light" | "dark";
 }
 
-export function Layout({ children, user, menus = [], settings }: LayoutProps) {
+export function Layout({ children, user, menus = [], settings, themeMode = "light" }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -32,6 +33,7 @@ export function Layout({ children, user, menus = [], settings }: LayoutProps) {
         menus={menus}
         onMenuClick={() => setMobileMenuOpen(true)}
         siteName={settings?.site_name}
+        themeMode={themeMode}
       />
       
       <MobileMenu

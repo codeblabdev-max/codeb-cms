@@ -114,9 +114,9 @@ export async function requireCSRF(request: Request): Promise<void> {
   }
 }
 
-// React 컴포넌트에서 사용할 CSRF 토큰 제공
-export function CSRFTokenInput({ token }: { token: string }) {
-  return <input type="hidden" name="_csrf" value={token} />;
+// CSRF 토큰 입력 필드 생성 (서버 사이드에서 HTML 문자열 반환)
+export function getCSRFTokenHTML(token: string): string {
+  return `<input type="hidden" name="_csrf" value="${token}" />`;
 }
 
 // API 요청용 CSRF 헤더 설정

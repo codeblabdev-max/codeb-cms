@@ -3,7 +3,7 @@
 import type { ActionFunction, LoaderFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { requireUser } from '../lib/auth.server';
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 import { validateInput } from '../lib/security/validation.server';
 import { notifyNewPost } from '../lib/realtime/notification-system.server';
 import { z } from 'zod';

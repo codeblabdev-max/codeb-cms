@@ -333,3 +333,13 @@ export async function scheduleSessionCleanup(): Promise<void> {
 
 // Export 타입들
 export type { SessionData, RedisSessionManager };
+
+// Compatibility exports for auth
+export const getSession = redisSessionStorage.getSession;
+export const commitSession = redisSessionStorage.commitSession;
+export const destroySession = redisSessionStorage.destroySession;
+
+// Export main functions
+export { 
+  redisSessionStorage as sessionStorage
+};

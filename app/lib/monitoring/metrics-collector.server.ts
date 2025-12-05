@@ -6,12 +6,14 @@ import { register, Counter, Histogram, Gauge, collectDefaultMetrics } from 'prom
 import { performance } from 'perf_hooks';
 import { getRedisCluster } from '../redis/cluster.server';
 
-// 기본 시스템 메트릭 수집 활성화
-collectDefaultMetrics({
-  prefix: 'blee_cms_',
-  timeout: 10000,
-  gcDurationBuckets: [0.001, 0.01, 0.1, 1, 2, 5],
-});
+// 기본 시스템 메트릭 수집 활성화 (한 번만 실행)
+if (!register.getSingleMetric('blee_cms_process_cpu_user_seconds_total')) {
+  collectDefaultMetrics({
+    prefix: 'blee_cms_',
+    timeout: 10000,
+    gcDurationBuckets: [0.001, 0.01, 0.1, 1, 2, 5],
+  });
+}
 
 // HTTP 요청 메트릭
 export const httpRequestsTotal = new Counter({
@@ -264,7 +266,7 @@ export class MetricsCollector {
    */
   async updateBusinessMetrics() {
     try {
-      const { db } = await import('~/utils/db.server');
+      const { db } = await import('~/lib/db.server');
       
       // 게시글 통계
       const postStats = await db.$queryRaw`
@@ -324,7 +326,7 @@ export class MetricsCollector {
    */
   async updateSystemMetrics() {
     try {
-      const { db } = await import('~/utils/db.server');
+      const { db } = await import('~/lib/db.server');
       
       // 데이터베이스 연결 통계
       const connectionStats = await db.$queryRaw`

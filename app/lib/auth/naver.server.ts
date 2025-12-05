@@ -3,7 +3,7 @@
  * 네이버 아이디로 로그인 API를 사용한 소셜 로그인 구현
  */
 
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 import { getSessionManager } from '../session.server';
 import crypto from 'crypto';
 

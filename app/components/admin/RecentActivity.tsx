@@ -1,75 +1,77 @@
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { formatDistanceToNow } from "date-fns";
-import { ko } from "date-fns/locale";
-import { FileText, MessageSquare, UserPlus } from "lucide-react";
+import { Link } from "@remix-run/react";
 
-interface Activity {
+interface ActivityItem {
   id: string;
-  type: 'post' | 'comment' | 'user';
   title: string;
-  description: string;
-  createdAt: Date;
-  user: {
-    name: string;
-    email: string;
-  };
+  subtitle: string;
+  timestamp: string;
+  status: string;
+  meta: string;
 }
 
 interface RecentActivityProps {
-  activities: Activity[];
+  title: string;
+  items: ActivityItem[];
+  viewAllUrl: string;
 }
 
-export function RecentActivity({ activities }: RecentActivityProps) {
-  const getIcon = (type: Activity['type']) => {
-    switch (type) {
-      case 'post':
-        return <FileText className="h-4 w-4" />;
-      case 'comment':
-        return <MessageSquare className="h-4 w-4" />;
-      case 'user':
-        return <UserPlus className="h-4 w-4" />;
-    }
-  };
-
-  const getTypeLabel = (type: Activity['type']) => {
-    switch (type) {
-      case 'post':
-        return '새 게시글';
-      case 'comment':
-        return '새 댓글';
-      case 'user':
-        return '새 회원가입';
+export function RecentActivity({ title, items, viewAllUrl }: RecentActivityProps) {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'published':
+        return 'bg-green-100 text-green-800';
+      case 'draft':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'active':
+        return 'bg-blue-100 text-blue-800';
+      case 'inactive':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>최근 활동</CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-base font-medium">{title}</CardTitle>
+        <Link 
+          to={viewAllUrl}
+          className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+        >
+          모두 보기
+        </Link>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {activities.length === 0 ? (
-            <p className="text-sm text-muted-foreground">최근 활동이 없습니다.</p>
+        <div className="space-y-3">
+          {items.length === 0 ? (
+            <p className="text-sm text-gray-500">최근 활동이 없습니다.</p>
           ) : (
-            activities.map((activity) => (
-              <div key={activity.id} className="flex items-start gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100">
-                  {getIcon(activity.type)}
-                </div>
-                <div className="flex-1 space-y-1">
-                  <p className="text-sm">
-                    <span className="font-medium">{activity.user.name || activity.user.email}</span>
-                    {' '}
-                    <span className="text-muted-foreground">{getTypeLabel(activity.type)}</span>
+            items.slice(0, 5).map((item) => (
+              <div key={item.id} className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {item.title}
                   </p>
-                  <p className="text-sm font-medium">{activity.title}</p>
-                  {activity.description && (
-                    <p className="text-sm text-muted-foreground">{activity.description}</p>
+                  <p className="text-xs text-gray-500">
+                    {item.subtitle}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-gray-400">
+                      {item.timestamp}
+                    </span>
+                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(item.status)}`}>
+                      {item.status === 'published' ? '발행됨' : 
+                       item.status === 'draft' ? '임시저장' :
+                       item.status === 'active' ? '활성' : '비활성'}
+                    </span>
+                  </div>
+                  {item.meta && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      {item.meta}
+                    </p>
                   )}
-                  <p className="text-xs text-muted-foreground">
-                    {formatDistanceToNow(activity.createdAt, { addSuffix: true, locale: ko })}
-                  </p>
                 </div>
               </div>
             ))

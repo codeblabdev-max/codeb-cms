@@ -2,7 +2,7 @@ import { json, LoaderFunctionArgs, redirect } from "@remix-run/node";
 import { Outlet, useLoaderData } from "@remix-run/react";
 import { AdminLayout } from "~/components/admin/AdminLayout";
 import { requireUser } from "~/lib/auth.server";
-import { db } from "~/utils/db.server";
+import { db } from "~/lib/db.server";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await requireUser(request);

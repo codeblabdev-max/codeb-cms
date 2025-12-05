@@ -26,7 +26,6 @@ interface BoardRowProps {
 
 export function BoardRow({ post, categorySlug }: BoardRowProps) {
   const {
-    id,
     number,
     title,
     slug,

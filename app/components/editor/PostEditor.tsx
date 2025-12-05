@@ -4,11 +4,32 @@ import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
 import { RichTextEditor } from "./RichTextEditor";
-import type { Category, Post } from "@prisma/client";
+import { FileUploader } from "./FileUploader";
+
+// 실제 사용하는 필드만 정의한 유연한 인터페이스
+interface PostData {
+  id: string;
+  title: string;
+  content: string;
+  menuId: string;
+  isNotice: boolean;
+  isPublished?: boolean;
+  menu?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+}
+
+interface CategoryData {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 interface PostEditorProps {
-  post?: Post & { category?: Category };
-  categories: Category[];
+  post?: PostData;
+  categories: CategoryData[];
   isAdmin?: boolean;
   mode: "create" | "edit";
 }
@@ -19,10 +40,20 @@ export function PostEditor({ post, categories, isAdmin = false, mode }: PostEdit
   
   const [title, setTitle] = useState(post?.title || "");
   const [content, setContent] = useState(post?.content || "");
-  const [categoryId, setCategoryId] = useState(post?.categoryId || "");
-  const [isPinned, setIsPinned] = useState(post?.isPinned || false);
+  const [categoryId, setCategoryId] = useState(post?.menuId || "");
+  const [isPinned, setIsPinned] = useState(post?.isNotice || false);
   const [isDraft, setIsDraft] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{
+    id: string;
+    filename: string;
+    originalName: string;
+    path: string;
+    thumbnailPath?: string;
+    size: number;
+    url: string;
+    thumbnailUrl?: string;
+  }>>([]);
 
   const handleSaveDraft = () => {
     setIsDraft(true);
@@ -103,9 +134,18 @@ export function PostEditor({ post, categories, isAdmin = false, mode }: PostEdit
           />
         </div>
 
-        {/* 파일 첨부 (추후 구현) */}
-        <div className="p-4 border border-dashed border-gray-300 rounded-lg text-center text-sm text-gray-500">
-          파일 첨부 기능은 추후 구현 예정입니다.
+        {/* 파일 첨부 */}
+        <div>
+          <label className="block text-sm font-medium mb-2">
+            파일 첨부
+          </label>
+          <FileUploader
+            onFilesChange={setUploadedFiles}
+            maxFiles={10}
+            maxFileSize={10 * 1024 * 1024}
+            acceptedTypes={["image/jpeg", "image/png", "image/webp", "image/gif"]}
+            initialFiles={uploadedFiles}
+          />
         </div>
 
         {/* 미리보기 */}

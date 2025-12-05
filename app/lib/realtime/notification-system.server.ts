@@ -9,7 +9,7 @@ const getSocketIOInstance = () => process.env.NODE_ENV === 'development' ? null 
       return null;
     }
   })();
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 import { sendSMS } from '../notifications/sms.server';
 
 export interface NotificationData {

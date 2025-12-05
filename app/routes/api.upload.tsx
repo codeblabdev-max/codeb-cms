@@ -4,7 +4,7 @@ import type { ActionFunction } from '@remix-run/node';
 import { json, unstable_parseMultipartFormData, unstable_createMemoryUploadHandler } from '@remix-run/node';
 import { processImage } from '../lib/media/image-optimization.server';
 import { requireUser } from '../lib/auth.server';
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 import path from 'path';
 import fs from 'fs/promises';
 

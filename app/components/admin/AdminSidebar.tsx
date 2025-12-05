@@ -23,6 +23,11 @@ const sidebarItems = [
     icon: LayoutDashboard,
   },
   {
+    title: "게시판 관리",
+    href: "/admin/boards",
+    icon: LayoutDashboard,
+  },
+  {
     title: "사용자 관리",
     href: "/admin/users",
     icon: Users,

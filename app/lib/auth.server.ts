@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 import { createCookieSessionStorage, redirect } from '@remix-run/node';
 import type { User } from '@prisma/client';
 import { env, security } from './env.server';
@@ -369,3 +369,13 @@ export async function verifyEmail(userId: string) {
     },
   });
 }
+
+// 인증 필수 라우트를 위한 헬퍼
+export async function requireAuth(request: Request) {
+  const user = await getUser(request);
+  if (!user) {
+    throw redirect('/auth/login');
+  }
+  return user;
+}
+

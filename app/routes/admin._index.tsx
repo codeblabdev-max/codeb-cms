@@ -4,7 +4,7 @@ import type { LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { requireUser } from '~/lib/auth.server';
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 import { StatsCard } from '~/components/admin/StatsCard';
 import { RecentActivity } from '~/components/admin/RecentActivity';
 import { 
@@ -50,11 +50,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
         },
       },
     }).then(data => ({
-      total: data.reduce((sum, item) => sum + item._count.id, 0),
-      growth: data.length > 0 ? 
-        ((data.slice(-7).reduce((sum, item) => sum + item._count.id, 0) / 7) - 
-         (data.slice(-14, -7).reduce((sum, item) => sum + item._count.id, 0) / 7)) / 
-         (data.slice(-14, -7).reduce((sum, item) => sum + item._count.id, 0) / 7 || 1) * 100 : 0
+      total: Number(data.reduce((sum, item) => sum + Number(item._count.id), 0)),
+      growth: data.length > 0 ?
+        ((data.slice(-7).reduce((sum, item) => sum + Number(item._count.id), 0) / 7) -
+         (data.slice(-14, -7).reduce((sum, item) => sum + Number(item._count.id), 0) / 7)) /
+         (data.slice(-14, -7).reduce((sum, item) => sum + Number(item._count.id), 0) / 7 || 1) * 100 : 0
     })),
 
     // 게시물 통계
@@ -65,7 +65,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         },
       },
-    }).then(data => ({ total: data._count.id, growth: 0 })),
+    }).then(data => ({ total: Number(data._count.id), growth: 0 })),
 
     // 댓글 통계
     db.comment.aggregate({
@@ -75,7 +75,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         },
       },
-    }).then(data => ({ total: data._count.id, growth: 0 })),
+    }).then(data => ({ total: Number(data._count.id), growth: 0 })),
 
     // 조회수 통계
     db.post.aggregate({
@@ -85,7 +85,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         },
       },
-    }).then(data => ({ total: data._sum.views || 0, growth: 0 })),
+    }).then(data => ({ total: Number(data._sum.views || 0), growth: 0 })),
 
     // 최근 게시물
     db.post.findMany({
@@ -156,6 +156,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     recentActivity: {
       posts: recentPosts.map(post => ({
         ...post,
+        views: Number(post.views),
         createdAt: post.createdAt.toISOString(),
         author: post.author.name || post.author.email,
         category: post.menu?.name || '미분류',

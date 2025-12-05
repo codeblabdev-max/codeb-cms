@@ -4,13 +4,10 @@
 
 html,
 body {
-  @apply bg-white;
+  @apply bg-white dark:bg-gray-900;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
-
 }
-
-
 
 @layer base {
   :root {
@@ -23,14 +20,14 @@ body {
     --color-background-rgb: 255 255 255;
     --color-text: #1F2937;
     --color-text-rgb: 31 41 55;
-    
+
     /* Font settings - Mobile first */
     --font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     --font-size-base: 14px;
     --font-size-h1: 1.75rem;
     --font-size-h2: 1.5rem;
     --font-size-h3: 1.25rem;
-    
+
     /* Tablet and up */
     @media (min-width: 768px) {
       --font-size-base: 16px;
@@ -38,15 +35,15 @@ body {
       --font-size-h2: 1.75rem;
       --font-size-h3: 1.5rem;
     }
-    
+
     /* Desktop */
     @media (min-width: 1024px) {
       --font-size-h1: 2.5rem;
       --font-size-h2: 2rem;
       --font-size-h3: 1.75rem;
     }
-    
-    /* Existing theme variables */
+
+    /* shadcn/ui theme variables */
     --background: 0 0% 100%;
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
@@ -73,9 +70,36 @@ body {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
+
+  .dark {
+    /* Dark mode theme colors */
+    --color-background: #111827;
+    --color-background-rgb: 17 24 39;
+    --color-text: #F9FAFB;
+    --color-text-rgb: 249 250 251;
+
+    /* shadcn/ui dark mode overrides - 회색 톤으로 변경 */
+    --background: 222.2 47.4% 11.2%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
 }
-
-
 
 @layer base {
   * {
@@ -86,28 +110,28 @@ body {
     font-size: var(--font-size-base);
     font-family: var(--font-family);
   }
-  
+
   /* Responsive Typography */
   h1 {
     font-size: var(--font-size-h1);
     @apply font-bold leading-tight;
   }
-  
+
   h2 {
     font-size: var(--font-size-h2);
     @apply font-semibold leading-tight;
   }
-  
+
   h3 {
     font-size: var(--font-size-h3);
     @apply font-semibold leading-normal;
   }
-  
+
   /* Touch target optimization */
   button, a, [role="button"] {
     @apply min-h-[44px] min-w-[44px];
   }
-  
+
   /* Mobile-friendly spacing */
   .container {
     @apply px-4 sm:px-6 lg:px-8;
@@ -119,35 +143,35 @@ body {
   .touch-manipulation {
     touch-action: manipulation;
   }
-  
+
   /* Mobile-optimized card */
   .mobile-card {
-    @apply rounded-lg shadow-sm bg-white p-4 transition-shadow duration-200;
+    @apply rounded-lg shadow-sm bg-white dark:bg-gray-800 p-4 transition-shadow duration-200;
     @apply hover:shadow-md active:shadow-sm;
   }
-  
+
   /* Responsive text truncation */
   .line-clamp-2-mobile {
     @apply line-clamp-2 sm:line-clamp-3;
   }
-  
+
   /* Mobile-friendly buttons */
   .btn-mobile {
     @apply px-4 py-2.5 text-sm font-medium rounded-lg;
     @apply sm:px-5 sm:py-3 sm:text-base;
     @apply touch-manipulation;
   }
-  
+
   /* Responsive grid gaps */
   .gap-responsive {
     @apply gap-3 sm:gap-4 md:gap-6;
   }
-  
+
   /* Mobile-first spacing utilities */
   .py-responsive {
     @apply py-6 sm:py-8 md:py-12;
   }
-  
+
   .px-responsive {
     @apply px-4 sm:px-6 md:px-8;
   }
@@ -159,25 +183,148 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-  
+
   /* Safe area insets for mobile devices */
   .safe-top {
     padding-top: env(safe-area-inset-top);
   }
-  
+
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
   }
-  
+
   .safe-left {
     padding-left: env(safe-area-inset-left);
   }
-  
+
   .safe-right {
     padding-right: env(safe-area-inset-right);
   }
+}
+
+/* TipTap Editor Styles */
+.ProseMirror {
+  outline: none;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  @apply text-gray-400 dark:text-gray-500;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.ProseMirror h1 {
+  @apply text-2xl font-bold mt-6 mb-4;
+}
+
+.ProseMirror h2 {
+  @apply text-xl font-bold mt-5 mb-3;
+}
+
+.ProseMirror h3 {
+  @apply text-lg font-bold mt-4 mb-2;
+}
+
+.ProseMirror p {
+  @apply my-2;
+}
+
+.ProseMirror ul {
+  @apply list-disc pl-6 my-2;
+}
+
+.ProseMirror ol {
+  @apply list-decimal pl-6 my-2;
+}
+
+.ProseMirror li {
+  @apply my-1;
+}
+
+.ProseMirror blockquote {
+  @apply border-l-4 border-gray-300 dark:border-gray-600 pl-4 my-4 italic text-gray-600 dark:text-gray-400;
+}
+
+.ProseMirror code {
+  @apply bg-gray-100 dark:bg-gray-800 rounded px-1.5 py-0.5 text-sm font-mono;
+}
+
+.ProseMirror pre {
+  @apply bg-gray-900 dark:bg-gray-950 text-gray-100 rounded-lg p-4 my-4 overflow-x-auto;
+}
+
+.ProseMirror pre code {
+  @apply bg-transparent p-0 text-inherit;
+}
+
+.ProseMirror a {
+  @apply text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300;
+}
+
+.ProseMirror img {
+  @apply max-w-full h-auto rounded-lg my-4;
+}
+
+.ProseMirror hr {
+  @apply border-gray-300 dark:border-gray-600 my-6;
+}
+
+/* Code Block Syntax Highlighting */
+.ProseMirror pre .hljs-comment,
+.ProseMirror pre .hljs-quote {
+  @apply text-gray-500;
+}
+
+.ProseMirror pre .hljs-keyword,
+.ProseMirror pre .hljs-selector-tag,
+.ProseMirror pre .hljs-addition {
+  @apply text-purple-400;
+}
+
+.ProseMirror pre .hljs-number,
+.ProseMirror pre .hljs-string,
+.ProseMirror pre .hljs-meta .hljs-meta-string,
+.ProseMirror pre .hljs-literal,
+.ProseMirror pre .hljs-doctag,
+.ProseMirror pre .hljs-regexp {
+  @apply text-green-400;
+}
+
+.ProseMirror pre .hljs-title,
+.ProseMirror pre .hljs-section,
+.ProseMirror pre .hljs-name,
+.ProseMirror pre .hljs-selector-id,
+.ProseMirror pre .hljs-selector-class {
+  @apply text-blue-400;
+}
+
+.ProseMirror pre .hljs-attribute,
+.ProseMirror pre .hljs-attr,
+.ProseMirror pre .hljs-variable,
+.ProseMirror pre .hljs-template-variable,
+.ProseMirror pre .hljs-class .hljs-title,
+.ProseMirror pre .hljs-type {
+  @apply text-yellow-400;
+}
+
+.ProseMirror pre .hljs-symbol,
+.ProseMirror pre .hljs-bullet,
+.ProseMirror pre .hljs-subst,
+.ProseMirror pre .hljs-meta,
+.ProseMirror pre .hljs-meta .hljs-keyword,
+.ProseMirror pre .hljs-selector-attr,
+.ProseMirror pre .hljs-selector-pseudo,
+.ProseMirror pre .hljs-link {
+  @apply text-cyan-400;
+}
+
+.ProseMirror pre .hljs-built_in,
+.ProseMirror pre .hljs-deletion {
+  @apply text-red-400;
 }

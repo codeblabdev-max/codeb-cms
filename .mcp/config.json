@@ -1,0 +1,85 @@
+{
+  "name": "blee-cms-mcp",
+  "version": "1.0.0",
+  "description": "블리CMS MCP 통합 설정",
+  "servers": {
+    "contest-continuity": {
+      "enabled": true,
+      "contexts": {
+        "initial": {
+          "contextId": "nextjs-contest-2025-09-05T05-54-46-591Z",
+          "capturedAt": "2025-09-05T05:54:46.660Z",
+          "framework": "remix"
+        },
+        "current": {
+          "contextId": "nextjs-contest-2025-09-05T05-57-07-242Z",
+          "capturedAt": "2025-09-05T05:57:07.298Z",
+          "framework": "nextjs"
+        }
+      },
+      "projectPath": "/Users/admin/new_project/chating/블리CMS/blee-cms",
+      "status": "active"
+    }
+  },
+  "project": {
+    "name": "블리CMS (BleeCMS)",
+    "type": "fullstack-cms",
+    "framework": "nextjs",
+    "migration": {
+      "from": "remix",
+      "to": "nextjs",
+      "date": "2025-09-05"
+    },
+    "language": "typescript",
+    "database": "postgresql",
+    "cache": "redis",
+    "realtime": "socket.io"
+  },
+  "analysis": {
+    "components": 113,
+    "files": 215,
+    "complexity": 0.57,
+    "security": "good",
+    "maintainability": 100
+  },
+  "features": {
+    "authentication": {
+      "jwt": true,
+      "oauth": ["kakao", "naver"]
+    },
+    "payment": "toss",
+    "notification": "naver-sens",
+    "monitoring": {
+      "prometheus": true,
+      "grafana": true,
+      "loki": true
+    },
+    "testing": {
+      "unit": "jest",
+      "e2e": "playwright",
+      "coverage": "target-100"
+    }
+  },
+  "workflow": {
+    "development": {
+      "contextCapture": "auto",
+      "testGeneration": "auto",
+      "codeAnalysis": "continuous"
+    },
+    "deployment": {
+      "staging": "docker-compose",
+      "production": "docker-compose.production"
+    }
+  },
+  "commands": {
+    "capture": "mcp capture-context",
+    "resume": "mcp resume-context",
+    "generateTests": "mcp generate-tests",
+    "analyze": "mcp analyze-context"
+  },
+  "documentation": {
+    "main": "/docs/MCP_INTEGRATION.md",
+    "context": "/docs/CONTEXT_DOCUMENTATION.md",
+    "development": "/docs/DEVELOPMENT_SETUP.md"
+  }
+}

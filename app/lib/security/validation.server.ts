@@ -3,6 +3,11 @@
 import DOMPurify from "isomorphic-dompurify";
 import { z } from "zod";
 
+// Generic input validation helper
+export function validateInput<T>(schema: z.ZodSchema<T>, data: unknown): T {
+  return schema.parse(data);
+}
+
 // HTML 콘텐츠 정화 (XSS 방지)
 export function sanitizeHTML(html: string): string {
   return DOMPurify.sanitize(html, {

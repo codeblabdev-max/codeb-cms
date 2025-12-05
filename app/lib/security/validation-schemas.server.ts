@@ -235,16 +235,16 @@ export const fileSchemas = {
     filename: z.string()
       .min(1, '파일명이 필요합니다.')
       .max(255, '파일명이 너무 깁니다.')
-      .regex(/^[a-zA-Z0-9가-힣._-]+$/, '파일명에 허용되지 않은 문자가 포함되어 있습니다.'),
-    
+      .regex(/^[a-zA-Z0-9\uAC00-\uD7AF._-]+$/, '파일명에 허용되지 않은 문자가 포함되어 있습니다.'),
+
     mimetype: z.string()
-      .regex(/^(image|video|application|text)\\/[a-zA-Z0-9][a-zA-Z0-9!#$&\\-\\^_]{0,126}$/, 
+      .regex(/^(image|video|application|text)\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_]{0,126}$/,
              '허용되지 않은 파일 형식입니다.'),
-    
+
     size: z.number()
       .positive('파일 크기가 유효하지 않습니다.')
       .max(10 * 1024 * 1024, '파일 크기는 10MB를 초과할 수 없습니다.'), // 10MB
-    
+
     category: z.enum(['image', 'document', 'media', 'other']).optional().default('other'),
   }),
 };

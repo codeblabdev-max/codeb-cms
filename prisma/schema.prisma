@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -76,10 +76,11 @@ model Post {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
   
-  menu        Menu      @relation(fields: [menuId], references: [id])
-  author      User      @relation(fields: [authorId], references: [id])
+  menu        Menu       @relation(fields: [menuId], references: [id])
+  author      User       @relation(fields: [authorId], references: [id])
   comments    Comment[]
-  
+  postVotes   PostVote[]
+
   @@index([menuId])
   @@index([authorId])
   @@index([createdAt])
@@ -294,3 +295,61 @@ model NotificationPreference {
 //   BANNER: 'banner',
 //   CUSTOM_HTML: 'custom_html'
 // }
+
+// 투표 타입
+enum VoteType {
+  LIKE
+  DISLIKE
+}
+
+// 투표 주제
+model VoteTopic {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  isActive    Boolean   @default(true) @map("is_active")
+  startDate   DateTime  @default(now()) @map("start_date")
+  endDate     DateTime? @map("end_date")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  votes       Vote[]
+
+  @@map("vote_topics")
+}
+
+// 투표
+model Vote {
+  id        String   @id @default(cuid())
+  topicId   String   @map("topic_id")
+  userId    String?  @map("user_id")
+  voteType  VoteType @map("vote_type")
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  topic     VoteTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([topicId, userId])
+  @@unique([topicId, ipAddress])
+  @@index([topicId])
+  @@index([userId])
+  @@map("votes")
+}
+
+// 게시글 투표
+model PostVote {
+  id        String   @id @default(cuid())
+  postId    String   @map("post_id")
+  userId    String?  @map("user_id")
+  voteType  VoteType @map("vote_type")
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@unique([postId, ipAddress])
+  @@index([postId])
+  @@index([userId])
+  @@map("post_votes")
+}

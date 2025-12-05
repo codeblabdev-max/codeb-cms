@@ -34,15 +34,19 @@ export function Navigation({ menus = [] }: NavigationProps) {
 
         {menus
           .sort((a, b) => a.order - b.order)
-          .map((menu) => (
-            <NavigationMenuItem key={menu.id}>
-              <NavigationMenuLink asChild>
-                <Link to={`/${menu.slug}`} className={navigationMenuTriggerStyle()}>
-                  {menu.name}
-                </Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem>
-          ))}
+          .map((menu) => {
+            // slug가 이미 /로 시작하면 그대로 사용, 아니면 / 추가
+            const url = menu.slug.startsWith('/') ? menu.slug : `/${menu.slug}`;
+            return (
+              <NavigationMenuItem key={menu.id}>
+                <NavigationMenuLink asChild>
+                  <Link to={url} className={navigationMenuTriggerStyle()}>
+                    {menu.name}
+                  </Link>
+                </NavigationMenuLink>
+              </NavigationMenuItem>
+            );
+          })}
       </NavigationMenuList>
     </NavigationMenu>
   );

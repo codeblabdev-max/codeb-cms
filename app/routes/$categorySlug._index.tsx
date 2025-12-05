@@ -1,7 +1,7 @@
 import { json, type LoaderFunctionArgs } from "@remix-run/node";
 import { useLoaderData, Link } from "@remix-run/react";
 import { KoreanBoard } from "~/components/board/KoreanBoard";
-import { db } from "~/utils/db.server";
+import { db } from "~/lib/db.server";
 import { getUser } from "~/lib/auth.server";
 import { Button } from "~/components/ui/button";
 import { PenSquare } from "lucide-react";
@@ -135,12 +135,12 @@ export default function CategoryPage() {
   const { menu, posts, currentPage, totalPages, totalPosts, sort, search, user } = useLoaderData<typeof loader>();
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      <div className="container mx-auto px-4 py-8" style={{ maxWidth: '1450px' }}>
         {/* 헤더 */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold text-gray-900">{menu.name}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{menu.name}</h1>
             {user && (
               <Link to={`/${menu.slug}/write`}>
                 <Button>
@@ -151,7 +151,7 @@ export default function CategoryPage() {
             )}
           </div>
           {menu.description && (
-            <p className="text-gray-600">{menu.description}</p>
+            <p className="text-gray-600 dark:text-gray-400">{menu.description}</p>
           )}
         </div>
 

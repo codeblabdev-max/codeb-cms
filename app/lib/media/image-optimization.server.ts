@@ -7,7 +7,7 @@ import crypto from "crypto";
 import { cache } from "../cache/redis-cluster.server";
 
 // 이미지 변환 옵션
-interface ImageTransformOptions {
+export interface ImageTransformOptions {
   width?: number;
   height?: number;
   quality?: number;
@@ -20,7 +20,7 @@ interface ImageTransformOptions {
 }
 
 // 이미지 메타데이터
-interface ImageMetadata {
+export interface ImageMetadata {
   width: number;
   height: number;
   format: string;
@@ -345,6 +345,50 @@ export function generateResponsiveImageSrcSet(hash: string): {
   ].join(', ');
   
   return { srcSet, sizes };
+}
+
+// 이미지 처리 함수 (간단한 인터페이스)
+export async function processImage(
+  input: Buffer | string,
+  options: ImageTransformOptions = {}
+): Promise<{
+  buffer: Buffer;
+  metadata: ImageMetadata;
+  path?: string;
+}> {
+  let buffer: Buffer;
+  
+  // 입력이 경로인 경우 파일 읽기
+  if (typeof input === 'string') {
+    buffer = await fs.readFile(input);
+  } else {
+    buffer = input;
+  }
+  
+  // 이미지 최적화
+  const optimizedBuffer = await ImageOptimizer.optimizeImage(buffer, {
+    quality: options.quality || 85,
+    format: options.format || 'webp',
+    ...options
+  });
+  
+  // 메타데이터 추출
+  const metadata = await ImageOptimizer.extractMetadata(optimizedBuffer);
+  
+  // 옵션에 따라 파일로 저장
+  let savedPath: string | undefined;
+  if (options.width || options.height) {
+    const hash = crypto.createHash('md5').update(optimizedBuffer).digest('hex');
+    savedPath = path.join(ImageOptimizer['cacheDir'], `${hash}_processed.${options.format || 'webp'}`);
+    await fs.mkdir(path.dirname(savedPath), { recursive: true });
+    await fs.writeFile(savedPath, optimizedBuffer);
+  }
+  
+  return {
+    buffer: optimizedBuffer,
+    metadata,
+    path: savedPath
+  };
 }
 
 // 초기화 실행

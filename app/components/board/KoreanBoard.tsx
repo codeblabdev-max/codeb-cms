@@ -169,14 +169,14 @@ export function KoreanBoard({
             />
           ))}
           {posts.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               게시글이 없습니다.
             </div>
           )}
         </div>
 
         {/* 데스크톱 뷰 */}
-        <div className="hidden md:block border rounded-lg overflow-hidden">
+        <div className="hidden md:block border border-gray-200 dark:border-gray-800 rounded-lg overflow-hidden bg-white dark:bg-gray-900">
           <Table>
             <BoardHeader />
             <TableBody>
@@ -213,9 +213,9 @@ export function KoreanBoard({
               </Button>
               
               <div className="flex items-center gap-1">
-                <span className="text-sm font-medium">{currentPage}</span>
-                <span className="text-sm text-gray-500">/</span>
-                <span className="text-sm text-gray-500">{totalPages}</span>
+                <span className="text-sm font-medium dark:text-gray-100">{currentPage}</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">/</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400">{totalPages}</span>
               </div>
               
               <Button

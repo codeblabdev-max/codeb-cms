@@ -5,7 +5,7 @@
 
 import { LRUCache, getGlobalL1Cache } from './lru-cache';
 import { RedisCache, getGlobalRedisCache } from '../redis/redis-cache';
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 import { getRedisCluster } from '../redis/cluster.server';
 import { EventEmitter } from 'events';
 

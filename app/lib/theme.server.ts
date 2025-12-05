@@ -1,14 +1,15 @@
-import { db } from "~/utils/db.server";
+import { db } from "~/lib/db.server";
 import { json } from "@remix-run/node";
 
 export interface ThemeConfig {
+  mode?: "light" | "dark";
   primaryColor: string;
   secondaryColor: string;
   backgroundColor: string;
   textColor: string;
   fontFamily: "pretendard" | "noto-sans-kr" | "malgun-gothic" | "custom" | string;
   fontSize: "small" | "medium" | "large";
-  preset?: "salary-man" | "modern" | "nature" | "rose" | "custom" | string;
+  preset?: "salary-man" | "modern" | "nature" | "rose" | "dark-modern" | "dark-nature" | "custom" | string;
   customFontCSS?: string;
   customFonts?: Array<{id: string, name: string, css: string}>;
   savedColorPalettes?: Array<{id: string, name: string, colors: string[]}>;
@@ -23,6 +24,7 @@ export interface ThemeConfig {
 }
 
 export const defaultTheme: ThemeConfig = {
+  mode: "light",
   primaryColor: "#3B82F6",
   secondaryColor: "#6366F1",
   backgroundColor: "#FFFFFF",
@@ -37,28 +39,46 @@ export const defaultTheme: ThemeConfig = {
 
 export const presetThemes: Record<string, Partial<ThemeConfig>> = {
   "salary-man": {
+    mode: "light",
     primaryColor: "#3B82F6",
     secondaryColor: "#6366F1",
     backgroundColor: "#FFFFFF",
     textColor: "#1F2937",
   },
   "modern": {
+    mode: "light",
     primaryColor: "#6B7280",
     secondaryColor: "#4B5563",
     backgroundColor: "#FFFFFF",
     textColor: "#111827",
   },
   "nature": {
+    mode: "light",
     primaryColor: "#10B981",
     secondaryColor: "#059669",
     backgroundColor: "#FFFFFF",
     textColor: "#064E3B",
   },
   "rose": {
+    mode: "light",
     primaryColor: "#F43F5E",
     secondaryColor: "#E11D48",
     backgroundColor: "#FFFFFF",
     textColor: "#881337",
+  },
+  "dark-modern": {
+    mode: "dark",
+    primaryColor: "#60A5FA",
+    secondaryColor: "#818CF8",
+    backgroundColor: "#111827",
+    textColor: "#F9FAFB",
+  },
+  "dark-nature": {
+    mode: "dark",
+    primaryColor: "#34D399",
+    secondaryColor: "#10B981",
+    backgroundColor: "#064E3B",
+    textColor: "#ECFDF5",
   }
 };
 
@@ -161,9 +181,20 @@ export function generateCSSVariables(theme: ThemeConfig): string {
     }
   }
 
+  // 다크모드 색상 자동 생성 (다크모드 프리셋이 아닌 경우)
+  const isDarkMode = theme.mode === "dark";
+  let darkBackground = theme.backgroundColor;
+  let darkText = theme.textColor;
+
+  if (isDarkMode && !theme.preset?.includes("dark")) {
+    // 라이트 테마를 다크모드로 자동 변환
+    darkBackground = "#111827"; // gray-900
+    darkText = "#F9FAFB"; // gray-50
+  }
+
   const cssVars = `
     ${customFontFaces}
-    
+
     :root {
       --color-primary: ${theme.primaryColor};
       --color-primary-rgb: ${hexToRgb(theme.primaryColor)};
@@ -173,7 +204,7 @@ export function generateCSSVariables(theme: ThemeConfig): string {
       --color-background-rgb: ${hexToRgb(theme.backgroundColor)};
       --color-text: ${theme.textColor};
       --color-text-rgb: ${hexToRgb(theme.textColor)};
-      
+
       --custom-font-family: ${customFontFamily};
       --font-family: ${fontFamily};
       --font-size-base: ${sizes.base};
@@ -182,6 +213,12 @@ export function generateCSSVariables(theme: ThemeConfig): string {
       --font-size-h3: ${sizes.h3};
     }
 
+    .dark {
+      --color-background: ${darkBackground};
+      --color-background-rgb: ${hexToRgb(darkBackground)};
+      --color-text: ${darkText};
+      --color-text-rgb: ${hexToRgb(darkText)};
+    }
   `;
 
   return cssVars;

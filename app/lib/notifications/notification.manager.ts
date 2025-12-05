@@ -4,7 +4,7 @@
  */
 
 import { v4 as uuidv4 } from 'uuid';
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 import { getRedisCluster } from '../redis/cluster.server';
 // Socket.IO는 런타임에만 사용 가능
 import {

@@ -414,3 +414,4 @@ export function cacheMiddleware(options: CacheMiddlewareOptions) {
 
 // 기본 export (하위 호환성)
 export { redisClient as redisCluster };
+export const cache = cacheManager;

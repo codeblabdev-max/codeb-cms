@@ -16,7 +16,7 @@ import { mockFunctions, testData } from '~/test/utils';
 
 // 데이터베이스 모킹
 const mockDb = mockFunctions.createMockPrisma();
-vi.mock('~/utils/db.server', () => ({
+vi.mock('~/lib/db.server', () => ({
   db: mockDb,
 }));
 

@@ -5,7 +5,7 @@
 
 import type { LoaderFunctionArgs } from '@remix-run/node';
 import { json } from '@remix-run/node';
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 import { getRedisCluster } from '~/lib/redis/cluster.server';
 import os from 'os';
 import { performance } from 'perf_hooks';
@@ -146,18 +146,26 @@ async function checkDatabase(): Promise<CheckResult> {
     await db.$queryRaw`SELECT 1`;
     
     // 연결 풀 상태 체크
-    const poolStatus = await db.$queryRaw`
-      SELECT 
+    const poolStatus = await db.$queryRaw<Array<{
+      total_connections: bigint;
+      idle_connections: bigint;
+      active_connections: bigint;
+    }>>`
+      SELECT
         count(*) as total_connections,
         count(*) filter (where state = 'idle') as idle_connections,
         count(*) filter (where state = 'active') as active_connections
       FROM pg_stat_activity
       WHERE datname = current_database()
     `;
-    
+
     const latency = performance.now() - start;
-    const stats = poolStatus[0] as any;
-    
+    const stats = {
+      total_connections: Number(poolStatus[0]?.total_connections ?? 0),
+      idle_connections: Number(poolStatus[0]?.idle_connections ?? 0),
+      active_connections: Number(poolStatus[0]?.active_connections ?? 0),
+    };
+
     // 연결 풀 경고 체크
     if (stats.active_connections > 80) {
       return {
@@ -176,7 +184,7 @@ async function checkDatabase(): Promise<CheckResult> {
   } catch (error) {
     return {
       status: 'error',
-      message: `Database connection failed: ${error.message}`,
+      message: `Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       latency: performance.now() - start,
     };
   }
@@ -187,25 +195,40 @@ async function checkDatabase(): Promise<CheckResult> {
  */
 async function checkRedis(): Promise<CheckResult> {
   const start = performance.now();
-  const redis = getRedisCluster();
-  
+
+  // Redis가 비활성화된 경우
+  if (process.env.REDIS_DISABLED === 'true') {
+    return {
+      status: 'ok',
+      message: 'Redis disabled by configuration',
+      latency: 0,
+    };
+  }
+
   try {
-    // Ping 테스트
-    const pong = await redis.ping();
-    
+    const redis = getRedisCluster();
+
+    // Ping 테스트 with timeout
+    const pingPromise = redis.ping();
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Redis ping timeout')), 5000)
+    );
+
+    const pong = await Promise.race([pingPromise, timeoutPromise]);
+
     if (pong !== 'PONG') {
       throw new Error('Invalid Redis response');
     }
-    
+
     // Redis 정보 가져오기
     const info = await redis.info('stats');
     const latency = performance.now() - start;
-    
+
     // 메모리 사용량 체크
     const memoryInfo = await redis.info('memory');
     const usedMemory = parseInt(memoryInfo.match(/used_memory:(\d+)/)?.[1] || '0');
     const maxMemory = parseInt(memoryInfo.match(/maxmemory:(\d+)/)?.[1] || '0');
-    
+
     if (maxMemory > 0 && usedMemory / maxMemory > 0.9) {
       return {
         status: 'warning',
@@ -214,15 +237,15 @@ async function checkRedis(): Promise<CheckResult> {
         details: { usedMemory, maxMemory },
       };
     }
-    
+
     return {
       status: 'ok',
       latency,
     };
   } catch (error) {
     return {
-      status: 'error',
-      message: `Redis connection failed: ${error.message}`,
+      status: 'warning',
+      message: `Redis unavailable: ${error instanceof Error ? error.message : 'Unknown error'}`,
       latency: performance.now() - start,
     };
   }
@@ -497,7 +520,7 @@ async function checkStorage(): Promise<CheckResult> {
   } catch (error) {
     return {
       status: 'error',
-      message: `Storage check failed: ${error.message}`,
+      message: `Storage check failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
     };
   }
 }

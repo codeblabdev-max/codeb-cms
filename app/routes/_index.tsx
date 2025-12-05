@@ -1,10 +1,11 @@
 import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { db } from "~/utils/db.server";
+import { db } from "~/lib/db.server";
 import { getUser } from "~/lib/auth.server";
 import { CategorySection } from "~/components/home/CategorySection";
 import { Sidebar } from "~/components/layout/Sidebar";
+import { VoteBox } from "~/components/home/VoteBox";
 
 export const meta: MetaFunction = () => {
   return [
@@ -15,24 +16,22 @@ export const meta: MetaFunction = () => {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const user = await getUser(request);
-  // 활성 카테고리 가져오기
-  const categories = await db.menu.findMany({
-    where: { isActive: true },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      order: true,
+  
+  // Menu 테이블에서 메인 페이지에 표시할 카테고리 가져오기
+  const menus = await db.menu.findMany({
+    where: {
+      isActive: true,
     },
     orderBy: { order: "asc" },
+    take: 8,
   });
 
   // 카테고리별 최신 게시물 가져오기
   const categoryPosts = await Promise.all(
-    categories.slice(0, 8).map(async (category) => {
+    menus.map(async (menu) => {
       const posts = await db.post.findMany({
         where: {
-          menuId: category.id,
+          menuId: menu.id,
           isPublished: true,
           publishedAt: {
             lte: new Date(),
@@ -62,7 +61,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
       });
 
       return {
-        category,
+        category: {
+          id: menu.id,
+          name: menu.name,
+          slug: menu.slug,
+          order: menu.order
+        },
         posts: posts.map((post) => ({
           id: post.id,
           title: post.title,
@@ -126,6 +130,43 @@ export async function loader({ request }: LoaderFunctionArgs) {
     take: 10,
   });
 
+  // 오늘의 투표 주제 가져오기
+  const todayVoteTopic = await db.voteTopic.findFirst({
+    where: {
+      isActive: true,
+      startDate: {
+        lte: new Date()
+      },
+      OR: [
+        { endDate: null },
+        { endDate: { gte: new Date() } }
+      ]
+    },
+    orderBy: { createdAt: "desc" }
+  });
+
+  // 투표 통계
+  let voteStats = null;
+  if (todayVoteTopic) {
+    const [likeCount, dislikeCount] = await Promise.all([
+      db.vote.count({
+        where: { topicId: todayVoteTopic.id, voteType: "LIKE" }
+      }),
+      db.vote.count({
+        where: { topicId: todayVoteTopic.id, voteType: "DISLIKE" }
+      })
+    ]);
+
+    voteStats = {
+      topicId: todayVoteTopic.id,
+      title: todayVoteTopic.title,
+      description: todayVoteTopic.description,
+      likeCount,
+      dislikeCount,
+      userVote: null // 로더에서는 IP를 정확히 알 수 없으므로 클라이언트에서 처리
+    };
+  }
+
   // 최근 댓글
   const recentComments = await db.comment.findMany({
     select: {
@@ -156,6 +197,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
   return json({
     user,
+    voteStats,
     categoryPosts,
     popularPosts: popularPosts.map((post) => ({
       id: post.id,
@@ -189,36 +231,29 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 export default function Index() {
-  const { user, categoryPosts, popularPosts, memberRankings, recentComments } = useLoaderData<typeof loader>();
+  const { user, voteStats, categoryPosts, popularPosts, memberRankings, recentComments } = useLoaderData<typeof loader>();
 
   const categoryColors = [
     "blue", "green", "purple", "orange", "red", "yellow", "gray", "blue"
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* 왼쪽 사이드바 - 데스크톱에서만 표시 */}
-          <div className="hidden lg:block lg:col-span-1">
-            {/* 간단한 메뉴나 광고 영역 */}
-          </div>
-
-          {/* 메인 콘텐츠 영역 - 너비 확장 */}
-          <main className="lg:col-span-9">
-            {/* 상단 배너/공지사항 영역 - 높이 두 배 */}
-            <div className="mb-6 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-12 text-white relative">
-              <h1 className="text-3xl font-bold mb-4">Blee CMS 커뮤니티</h1>
-              <p className="text-blue-100 text-lg">다양한 주제로 자유롭게 소통하는 공간입니다</p>
-              
-              {/* 어드민 사용자에게만 관리 패널 링크 표시 */}
-              {user?.role === "ADMIN" && (
-                <div className="absolute top-4 right-4">
+    <div className="bg-gray-50 dark:bg-gray-950">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6" style={{ maxWidth: '1450px' }}>
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6">
+          {/* 메인 콘텐츠 영역 - 왼쪽 */}
+          <main className="order-1">
+            {/* 오늘의 투표 - 호불호 박스 */}
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">오늘의 투표</h2>
+                {/* 어드민 사용자에게만 관리 패널 링크 표시 */}
+                {user?.role === "ADMIN" && (
                   <a
                     href="/admin"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg text-white text-sm font-medium transition-colors"
+                    className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 text-sm font-medium transition-colors"
                     title="관리자 패널 (새 창)"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,6 +262,20 @@ export default function Index() {
                     </svg>
                     관리 패널
                   </a>
+                )}
+              </div>
+              {voteStats ? (
+                <VoteBox
+                  topicId={voteStats.topicId}
+                  title={voteStats.title}
+                  description={voteStats.description}
+                  initialLikeCount={voteStats.likeCount}
+                  initialDislikeCount={voteStats.dislikeCount}
+                  initialUserVote={voteStats.userVote}
+                />
+              ) : (
+                <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-800 p-8 text-center">
+                  <p className="text-gray-500 dark:text-gray-400">현재 진행 중인 투표가 없습니다</p>
                 </div>
               )}
             </div>
@@ -245,8 +294,8 @@ export default function Index() {
             </div>
           </main>
 
-          {/* 오른쪽 사이드바 */}
-          <aside className="lg:col-span-2">
+          {/* 오른쪽 사이드바 - 320px 고정 너비 */}
+          <aside className="order-2 lg:w-80">
             <Sidebar
               popularPosts={popularPosts}
               memberRankings={memberRankings}

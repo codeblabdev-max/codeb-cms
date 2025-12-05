@@ -3,7 +3,7 @@
 import type { LoaderFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { requireUser } from '../lib/auth.server';
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 
 export const loader: LoaderFunction = async ({ request }) => {
   const user = await requireUser(request);

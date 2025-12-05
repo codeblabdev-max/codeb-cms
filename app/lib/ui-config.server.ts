@@ -2,7 +2,7 @@
  * UI 설정 관리 시스템
  * 데이터베이스 기반 UI 설정 저장 및 관리
  */
-import { db } from '~/utils/db.server';
+import { db } from '~/lib/db.server';
 import { getRedisCluster } from './redis/cluster.server';
 import { z } from 'zod';
 

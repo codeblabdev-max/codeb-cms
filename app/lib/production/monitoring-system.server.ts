@@ -649,7 +649,7 @@ class MonitoringSystem extends EventEmitter {
     return `alert_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  isStarted(): boolean {
+  getIsStarted(): boolean {
     return this.isStarted;
   }
 }
