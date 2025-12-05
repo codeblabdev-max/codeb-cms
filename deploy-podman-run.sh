@@ -7,8 +7,8 @@ set -e
 cd /opt/vsvs/app
 
 echo "🧹 Cleaning up old containers..."
-podman stop app_app_1 app_postgres_1 app_redis_1 2>/dev/null || true
-podman rm app_app_1 app_postgres_1 app_redis_1 2>/dev/null || true
+podman stop vsvs-cms-app app_postgres_1 app_redis_1 2>/dev/null || true
+podman rm vsvs-cms-app app_postgres_1 app_redis_1 2>/dev/null || true
 
 # Create network if needed
 echo "🌐 Creating network..."
@@ -67,7 +67,7 @@ echo " ✅ Redis is healthy!"
 echo ""
 echo "🚀 Starting Application..."
 podman run -d \
-  --name app_app_1 \
+  --name vsvs-cms-app \
   --network vsvs_network \
   -p 3100:3000 \
   -e NODE_ENV=production \
@@ -104,7 +104,7 @@ curl -s http://localhost:3100/api/health && echo "" || echo "Application still s
 
 echo ""
 echo "📋 Application Logs:"
-podman logs app_app_1 --tail 20
+podman logs vsvs-cms-app --tail 20
 
 echo ""
 echo "✨ Deployment complete!"
