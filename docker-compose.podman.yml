@@ -1,0 +1,104 @@
+# Podman 환경용 Docker Compose 설정 (vsvs.kr)
+# Podman Compose 사용: podman-compose up -d
+
+version: '3.8'
+
+services:
+  # 애플리케이션 서버
+  app:
+    container_name: vsvs-cms-app
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+      args:
+        - NODE_ENV=production
+    restart: unless-stopped
+    ports:
+      - "3100:3000"
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - app_uploads:/app/uploads
+      - app_logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL 데이터베이스
+  postgres:
+    image: docker.io/library/postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vsvs_cms}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=ko_KR.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5440:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis 캐시
+  redis:
+    image: docker.io/library/redis:7-alpine
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 512mb
+      --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6390:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # 백업 서비스 (선택사항)
+  backup:
+    image: docker.io/library/postgres:15-alpine
+    restart: "no"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-vsvs_cms}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      BACKUP_SCHEDULE: "0 3 * * *"  # 매일 새벽 3시
+      BACKUP_RETENTION_DAYS: "7"
+    volumes:
+      - backup_data:/backups
+    entrypoint: >
+      sh -c "
+        echo 'Setting up backup cron job...'
+        echo '${BACKUP_SCHEDULE} /usr/local/bin/backup.sh' | crontab -
+        crond -f
+      "
+    depends_on:
+      - postgres
+
+volumes:
+  app_uploads:
+    driver: local
+  app_logs:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backup_data:
+    driver: local

@@ -1,7 +1,7 @@
 # 프로덕션용 멀티스테이지 Dockerfile
 
 # Stage 1: Base image with dependencies
-FROM node:18-alpine AS base
+FROM node:20-alpine AS base
 
 # 필수 시스템 패키지 설치
 RUN apk add --no-cache \
@@ -36,9 +36,16 @@ FROM base AS builder
 # 빌드에 필요한 패키지 설치
 RUN apk add --no-cache python3 make g++
 
+# Package files 복사 (빌드에 필요한 모든 의존성 설치)
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# 모든 의존성 설치 (devDependencies 포함)
+RUN npm ci && \
+    npx prisma generate
+
 # 소스 코드 복사
 COPY . .
-COPY --from=deps /app/node_modules ./node_modules
 
 # 빌드 환경 변수
 ARG NODE_ENV=production
