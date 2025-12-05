@@ -20,7 +20,7 @@ export class ImageOptimizer {
 
   // 지원되는 이미지 포맷
   private supportedFormats = ['jpeg', 'jpg', 'png', 'webp', 'gif', 'svg'];
-  
+
   // 압축 설정
   private compressionSettings = {
     jpeg: { quality: 85, progressive: true },
@@ -56,23 +56,23 @@ export class ImageOptimizer {
     options?: ImageOptimizationOptions
   ): Promise<OptimizationResult> {
     const start = performance.now();
-    
+
     try {
       const inputStats = await fs.stat(inputPath);
       const originalSize = inputStats.size;
-      
+
       // 이미지 정보 분석
       const metadata = await sharp(inputPath).metadata();
-      
+
       if (!this.isValidImage(metadata)) {
         throw new Error('지원되지 않는 이미지 형식입니다');
       }
 
       const results: OptimizedImageInfo[] = [];
-      
+
       // 기본 최적화 (원본 포맷)
       const optimizedOriginal = await this.optimizeFormat(
-        inputPath, 
+        inputPath,
         metadata.format as string,
         options
       );
@@ -134,7 +134,7 @@ export class ImageOptimizer {
       return result;
     } catch (error) {
       const duration = performance.now() - start;
-      
+
       this.metricsCollector.recordFileUpload(
         'unknown',
         0,
@@ -185,9 +185,9 @@ export class ImageOptimizer {
     }
 
     await pipeline.toFile(outputPath);
-    
+
     const stats = await fs.stat(outputPath);
-    
+
     return {
       path: outputPath,
       filename: outputFilename,
@@ -289,13 +289,13 @@ export class ImageOptimizer {
     for (const size of thumbnailSizes) {
       try {
         const outputFilename = this.generateThumbnailFilename(
-          inputPath, 
-          size.name, 
+          inputPath,
+          size.name,
           'webp'
         );
         const outputPath = path.join(
-          this.optimizedDir, 
-          'thumbnails', 
+          this.optimizedDir,
+          'thumbnails',
           outputFilename
         );
 
@@ -354,15 +354,14 @@ export class ImageOptimizer {
             size.width,
             format
           );
-          
+
           const outputPath = path.join(this.optimizedDir, outputFilename);
 
           const metadata = await sharp(inputPath)
             .resize(size.width, null, {
               fit: 'inside',
               withoutEnlargement: true,
-            })
-            [format as keyof sharp.Sharp](
+            })[format as keyof sharp.Sharp](
               this.compressionSettings[format as keyof typeof this.compressionSettings]
             )
             .toFile(outputPath);
@@ -407,7 +406,7 @@ export class ImageOptimizer {
     if (!this.supportedFormats.includes(metadata.format.toLowerCase())) return false;
     if (!metadata.width || !metadata.height) return false;
     if (metadata.width > 10000 || metadata.height > 10000) return false; // 최대 크기 제한
-    
+
     return true;
   }
 
@@ -424,8 +423,8 @@ export class ImageOptimizer {
    * 썸네일 파일명 생성
    */
   private generateThumbnailFilename(
-    inputPath: string, 
-    size: string, 
+    inputPath: string,
+    size: string,
     format: string
   ): string {
     const basename = path.basename(inputPath, path.extname(inputPath));
@@ -483,7 +482,7 @@ export class ImageOptimizer {
     try {
       const dirs = [this.optimizedDir];
       const subdirs = ['webp', 'avif', 'thumbnails'];
-      
+
       for (const subdir of subdirs) {
         dirs.push(path.join(this.optimizedDir, subdir));
       }
@@ -491,11 +490,11 @@ export class ImageOptimizer {
       for (const dir of dirs) {
         try {
           const files = await fs.readdir(dir);
-          
+
           for (const file of files) {
             const filePath = path.join(dir, file);
             const stats = await fs.stat(filePath);
-            
+
             if (stats.isFile() && (now - stats.mtime.getTime()) > maxAge) {
               freedBytes += stats.size;
               await fs.unlink(filePath);
@@ -508,7 +507,7 @@ export class ImageOptimizer {
       }
 
       console.log(`🧹 이미지 정리 완료: ${deletedCount}개 파일 삭제, ${(freedBytes / 1024 / 1024).toFixed(2)}MB 확보`);
-      
+
       return {
         deletedFiles: deletedCount,
         freedBytes,
