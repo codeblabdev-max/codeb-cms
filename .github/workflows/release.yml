@@ -341,7 +341,7 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
       
       - name: Send email notification
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v6
         with:
           server_address: ${{ secrets.MAIL_SERVER }}
           server_port: ${{ secrets.MAIL_PORT }}
