@@ -157,7 +157,7 @@ jobs:
           gzip blee-cms-${{ matrix.platform }}.tar
       
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v5
         with:
           name: docker-image-${{ matrix.platform }}
           path: blee-cms-${{ matrix.platform }}.tar.gz
